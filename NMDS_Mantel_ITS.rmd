@@ -13,14 +13,7 @@ Mantel and NMDS of rarefied table.
 asv <- read_tsv("/Users/lmoore/Desktop/Documents/CSU/PhD/ITS/ITS_table.txt")
 metadata <- read_csv("/Users/lmoore/Desktop/Documents/CSU/PhD/16s/Grazing_Microbiome/metadata.csv") 
 ```
-I was not able to rarefy my ITS table as I would have lost too many samples, therefore, I chose to use relative abundance to normalize my table instead. 
-
-```{r}
-# Convert ASV counts to relative abundances
-asv <- asv %>%
-  mutate(across(-OTU, ~ . / sum(.), .names = "{.col}")) 
-```
-
+I was not able to rarefy my ITS table as I would have lost too many samples, therefore, I chose to use a square root transformation to normalize my table instead. 
 ```{r}
 # Apply square root transformation to all sample columns, keeping OTU intact
 asv <- asv %>%

@@ -1,0 +1,259 @@
+
+```{r}
+library(tidyverse)
+library(vegan)
+set.seed(12345) 
+library(ggthemes)
+```
+
+
+Mantel and NMDS of rarefied table. 
+
+```{r}
+asv <- read_csv("rarefy.table.csv")
+metadata <- read_csv("metadata.csv") 
+
+```
+
+
+
+```{r}
+# Select only the columns needed for analysis 
+metadata <- metadata %>%
+  select(Sample, depth, depth_num, Depth_Practice, Location, Adaptive_Score, Practice, 
+         Location_Depth, Biomass, Depth_Practice,
+         percent_clay, percent_sand, percent_silt, pH, 
+         total_c, maom_c, pom_c, total_n, maom_n, pom_n, 
+         fmaoc, fpoc, c_n_ratio, mean_annual_temp, mean_annual_precip, 
+         radiation, PET)
+
+```
+
+Bray-curtis cannot handle negative values, scale variables with negatives.
+Chose to use Min-Max Normalization to make all values non-negative while preserving relative differences.
+```{r}
+metadata <- metadata %>%
+  mutate(mean_annual_temp_scaled = (mean_annual_temp - min(mean_annual_temp)) / 
+                                   (max(mean_annual_temp) - min(mean_annual_temp))) %>% 
+  select(-mean_annual_temp)
+
+```
+
+
+If you want to include an environmental fit, this is where you create a dataframe to do that.
+```{r}
+# Select the environmental variables you want to add to the NMDS
+envfit.data <- meta %>%
+  select(Sample, pH, total_c, maom_c, pom_c, total_n, 
+         percent_clay, percent_sand, percent_silt, 
+         mean_annual_temp_scaled, mean_annual_precip, 
+         PET, radiation)
+
+```
+
+We need to invert the dataframe so that each row is a sample and each column is an ASV. This is also an opprotunity to filter out any samples/treatments we are not interested in.
+```{r}
+flip <- asv %>% 
+  select(-2) %>% 
+ #select(1, contains("_D3_"))  %>% # if you want to filter out certain samples could be done here
+  pivot_longer(2:83, names_to = "Sample", values_to = "count") %>% 
+  pivot_wider(names_from = ASV, values_from = count)  %>%
+  inner_join(metadata) %>%
+  filter(Sample !="WYCO_0923_05_PR_D3_B_C03_XT" & Sample !="WYCO_0923_05_PR_D2_B_C03_XT" & Sample !="WYCO_0923_015_AD_D3_B_C05_XT") 
+```
+
+```{r}
+envfit.data <- envfit.data %>%
+  filter(Sample %in% flip$Sample)
+```
+
+
+
+Make sure that the dataframe and metadata have the same number of rows and that the rows are in the exact same order.
+```{r}
+meta <- flip %>% 
+  select(1) %>% 
+  inner_join(metadata)
+```
+
+Here we filter the dataframe to remove the first column composed of sample names.
+```{r}
+table <- flip %>% 
+ select(2:21383) 
+```
+
+
+
+```{r}
+# Ensure only numeric columns are in the table before calculating Bray-Curtis
+table_numeric <- table %>%
+  select(where(is.numeric))  # Select only numeric columns
+```
+
+
+
+The next step is to take the data frame and turn it into a distance matrix. Here we are calculating distance using Bray-Curtis distance, but many other methods are available. Distance matrices are pairwise comparisons that compare the similarity of every community on a scale from 0 to 1. 0 indicates communities are exactly the same and 1 indicates there is no similarity in the communities.
+```{r}
+data.t <- as.matrix(vegdist(table_numeric, method = 'bray'))
+```
+
+Running a mantel test on NMDS
+```{r}
+# Step 6: Run Mantel Tests
+# Function for running mantel tests
+run_mantel_test <- function(variable, distance_matrix) {
+  variable_dist <- dist(variable, method = "euclidean")
+  mantel_test <- mantel(distance_matrix, variable_dist, method = "spearman", permutations = 999)
+  return(list(statistic = mantel_test$statistic, p_value = mantel_test$signif))
+}
+
+# Mantel tests for environmental variables
+mantel_results <- list(
+  "pH" = run_mantel_test(meta$pH, data.t),
+  "SOC" = run_mantel_test(meta$total_c, data.t),
+  "MAOM C" = run_mantel_test(meta$maom_c, data.t),
+  "POM C" = run_mantel_test(meta$pom_c, data.t),
+  "Nitrogen" = run_mantel_test(meta$total_n, data.t),
+  "MAOM N" = run_mantel_test(meta$maom_n, data.t),
+  "POM N" = run_mantel_test(meta$pom_n, data.t),
+  "Clay" = run_mantel_test(meta$percent_clay, data.t),
+  "Sand" = run_mantel_test(meta$percent_sand, data.t),
+  "Silt" = run_mantel_test(meta$percent_silt, data.t),
+  "Depth" = run_mantel_test(meta$depth_num, data.t),
+  "Adaptive Score" = run_mantel_test(meta$Adaptive_Score, data.t),
+  "MAT" = run_mantel_test(meta$mean_annual_temp_scaled, data.t), 
+  "MAP" = run_mantel_test(meta$mean_annual_precip, data.t), 
+  "PET" = run_mantel_test(meta$PET, data.t), 
+  "Solar Radiation" = run_mantel_test(meta$radiation, data.t)
+)
+
+# Create a dataframe of Mantel results
+mantel_df <- data.frame(
+  variable = names(mantel_results),
+  rho_value = sapply(mantel_results, function(x) x$statistic),
+  p_val = sapply(mantel_results, function(x) x$p_value)
+)
+```
+
+Save Mantel test results
+```{r}
+#write.csv(mantel_df, file = "mantel_results_rarefied.csv")
+```
+
+Create bar chart of mantel test
+```{r}
+# Ensure the variables are ordered by rho_value in descending order for better visualization
+mantel_df <- mantel_df %>%
+  mutate(variable = reorder(variable, -rho_value),
+         significance = case_when(
+           p_val <= 0.001 ~ "***",
+           p_val <= 0.01  ~ "**",
+           p_val <= 0.05  ~ "*",
+           TRUE ~ ""
+         ))  # Create a column for significance stars
+
+# Create the bar chart
+mantel_plot <- ggplot(mantel_df, aes(x = variable, y = rho_value)) +
+  geom_bar(stat = "identity", fill = "#896A78") +  # Create bar chart
+  geom_text(aes(label = significance), vjust = -0.5, size = 4) +  # Display significance stars above bars
+  labs(title = "Mantel Test Results", x = "Environmental Variables", y = "Mantel's Rho") +  # Axis and title labels
+  theme_tufte() +  # Clean theme
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))   # Rotate x-axis labels
+
+print(mantel_plot)
+
+```
+
+We can do pairwise comparisons to understand which sites are different from each other
+```{r}
+#make a new table of all of these with just the individual sites and their depths
+library(devtools)
+#install_github("pmartinezarbizu/pairwiseAdonis/pairwiseAdonis")
+library(pairwiseAdonis)
+pairwise.adonis<-pairwise.adonis2(data.t ~ Location_Depth, data=meta, permutations = 999)
+pairwise.adonis
+```
+
+Now we can visualize community similarity using NMDS (non-metric multidimensional scaling), an iterative and non-parametirc method which aims to plot pairwise dissimilarity between communities. Each point will represent once sample (or microbial community). The closer points are together the more similar those communities are to each other.
+
+How good an NMDS visualization is at representing your community can be assessed by the stress values. Typically NMDS with stress below 0.2 can be retained.
+Stress value below 0.05 is considered a great fit
+Stress value below 0.1 is considered a good fit 
+Stress value below 0.2 is considered an ok fit 
+A stress value above 0.2 is questionable and anything approaching 0.3 is considered arbitrary
+
+Importatant parameters in the metaMDS function:
+"trymax"" is the maximum number of random starts it will perform to try to reach convergence. The defaul value is 20 and if it reaches convergence after 20 random starts it will end there. Otherwise it will go either until it reaches convergence or the number of tries youhave put in.
+
+"k" is the number of dimensions. If you are having trouble converging then you can try increasing the k value. If you don't set k it will run with 2 dimensions. Increasing hte k value will likely increase the stress. Anything above 5 dimensions makes interpreting 2-dimensional plots difficult.
+
+
+
+```{r}
+NMDS<-metaMDS(data.t, trymax= 200)
+#envfit.data <- read_csv("/Users/lmoore/Desktop/Documents/CSU/PhD/16s/Grazing_Microbiome/envfit_test.csv") # text file of enviornmental variables
+envfit_perm <- envfit(NMDS, envfit.data, permutations = 999) # this fits environmental vectors
+MDS1 = NMDS$points[,1]
+MDS2 = NMDS$points[,2]
+NMDS = data.frame(NMDS1 = MDS1, NMDS2 = MDS2)
+
+
+```
+
+```{r}
+NMDS <- metaMDS(data.t, k = 3, trymax = 200)  # Increase k to 3 dimensions
+
+```
+
+
+```{r}
+stressplot(NMDS, NMDS$diss)
+
+```
+
+```{r}
+mrpp.1 <- mrpp(data.t, meta$Practice, permutations=999, distance="bray")
+mrpp.1
+```
+
+
+```{r}
+anosim.1 <- anosim(data.t, meta$Practice, permutations=999, distance="bray")
+anosim.1
+```
+
+**Must use the NMDS with 2 dimensions for plotting
+```{r}
+meta$Depth_Practice <- factor(meta$Depth_Practice, levels = c('D1_AMP','D2_AMP', 'D3_AMP', 'D1_Conventional', 'D2_Conventional', 'D3_Conventional' ))
+NMDS_plot <- ggplot(NMDS) +
+  geom_point(aes(x=NMDS1, y=NMDS2, col=meta$Depth_Practice,  shape=meta$Location), size=4) + 
+  theme_bw() +
+  labs(color = "Depth and Practice", shape= "Site")+
+   scale_shape_manual(values = c(15,16,17,18,4,7)) +  #change shape of points
+  #stat_ellipse(aes(x=NMDS1, y=NMDS2, col=meta$Depth_Practice)) + #add ellipse around variables
+  scale_color_manual(values=c('#b35806','#f1a340','#fee0b6', '#542788','#998ec3', '#d8daeb'))+ #change color of points
+   theme(text=element_text(size=21))
+ NMDS_plot
+```
+
+
+
+
+Below is the code to select significant enviornmental variables and overlay the vectors onto the NMDS
+```{r}
+env.scores <- as.data.frame(scores(envfit_perm, display = "vectors")) #extracts relevant scores from envifit
+env.scores <- cbind(env.scores, env.variables = rownames(env.scores)) #and then gives them their names
+
+env.scores <- cbind(env.scores, pval = envfit_perm$vectors$pvals) # add pvalues to dataframe
+sig.env.scrs <- subset(env.scores, pval<=0.05) #subset data to show variables significant at 0.05
+```
+
+Plot the NMDS with the environmental fit
+```{r}
+plot_env <- NMDS_plot +
+  geom_segment(data = sig.env.scrs, aes(x = 0, xend=NMDS1, y=0, yend=NMDS2), arrow = arrow(length = unit(0.25, "cm")), colour = "grey10", lwd=0.3) + #add vector arrows of significant env variables
+  ggrepel::geom_text_repel(data = sig.env.scrs, aes(x=NMDS1, y=NMDS2, label = env.variables), cex = 4, direction = "both", segment.size = 0.25)#+ #add labels for env variables
+  #labs(title="Ordination with environmental vectors")
+plot_env
+
+```

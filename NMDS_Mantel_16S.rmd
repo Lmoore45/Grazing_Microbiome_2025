@@ -43,7 +43,7 @@ metadata <- metadata %>%
 If you want to include an environmental fit, this is where you create a dataframe to do that.
 ```{r}
 # Select the environmental variables you want to add to the NMDS
-envfit.data <- meta %>%
+envfit.data <- metadata %>%
   select(Sample, pH, total_c, maom_c, pom_c, total_n, 
          percent_clay, percent_sand, percent_silt, 
          mean_annual_temp_scaled, mean_annual_precip, 

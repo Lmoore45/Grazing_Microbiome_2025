@@ -1,4 +1,4 @@
-##### Correlation Matrix for Metadata Predictors
+
 
 ```{r}
 library(corrplot)
@@ -6,12 +6,12 @@ library(tidyverse)
 library(Hmisc)
 ```
 
-# Load metadata containing predictor variables
+Load metadata containing predictor variables
 ```{r}
 metadata <- read_csv("/Users/lmoore/Desktop/Documents/CSU/PhD/16s/Grazing_Microbiome/metadata.csv")
 ```
 
-# Select and clean variables for correlation analysis
+Select and clean variables for correlation analysis
 ```{r}
 combined_predictors <- metadata %>%
   dplyr::select(
@@ -53,7 +53,7 @@ p_matrix <- cor_results$P
 diag(p_matrix) <- 0  # or use 1 if you want them excluded from significance coloring
 ```
 
-# Plot correlation matrix with significant correlations only
+Plot correlation matrix with significant correlations only
 ```{r correlation_plot, fig.width = 10, fig.height = 10}
 corrplot(cor_matrix,
          method = "color",

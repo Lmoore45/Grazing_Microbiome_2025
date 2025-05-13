@@ -9,11 +9,11 @@ source("VIP.R")  # Only needed if using custom VIP functions (not used here)
 ##### Step 2: Load Data
 # Load metadata and ITS OTU table
 metadata <- read_csv("metadata.csv")
-otu_ITS <- read_tsv("ITS_table.txt")
+otu_ITS <- read_csv("ITS_table.csv")
 
 ##### Step 3: Preprocess OTU Table
 # Convert ITS OTU table to long and then wide format
-otu_long <- otu_ITS %>% pivot_longer(cols = -OTU, names_to = "Sample", values_to = "Abundance")
+otu_long <- otu_ITS %>% dplyr::select(-Taxon) %>% pivot_longer(cols = -OTU, names_to = "Sample", values_to = "Abundance")
 otu_wide <- otu_long %>% pivot_wider(names_from = OTU, values_from = Abundance)
 
 # Filter metadata and OTU table for matching samples
@@ -92,7 +92,7 @@ r2_results <- purrr::map_dfr(vip_high, ~{
 
 ##### Step 12: Integrate Taxonomy
 # Clean and merge ITS taxonomy table with VIP and R2 results
-taxonomy <- read.delim("ITS_taxonomy.txt", sep = "\t", header = TRUE, stringsAsFactors = FALSE)
+taxonomy <- otu_ITS %>%  dplyr::select(1:2)
 taxonomy_split <- taxonomy %>%
   separate(Taxonomy, into = c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species"), sep = ";", fill = "right") %>%
   mutate(across(everything(), ~str_remove(., ".*__"))) %>%

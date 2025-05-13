@@ -8,7 +8,7 @@ source("VIP.R")  # Custom script to compute VIPs
 
 ##### Step 2: Load Data
 metadata <- read_csv("metadata.csv")
-otu_16S <- read_csv("rarefy_16S.csv")
+otu_16S <- read_csv("1.2_16S_OTU_Table.csv")
 
 ##### Step 3: Preprocess OTU Table
 # Pivot OTU table to long format, then wide with samples as rows

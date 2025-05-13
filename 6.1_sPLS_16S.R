@@ -4,7 +4,7 @@ library(tidyverse)
 library(compositions)  # For CLR transformation
 library(mixOmics)
 library(paletteer)
-source("VIP.R")  # Custom script to compute VIPs
+source("6.0_sPLS_VIP.R")  # Custom script to compute VIPs
 
 ##### Step 2: Load Data
 metadata <- read_csv("metadata.csv")

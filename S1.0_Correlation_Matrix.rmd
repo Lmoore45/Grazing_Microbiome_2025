@@ -1,0 +1,67 @@
+##### Correlation Matrix for Metadata Predictors
+
+```{r}
+library(corrplot)
+library(tidyverse)
+library(Hmisc)
+```
+
+# Load metadata containing predictor variables
+```{r}
+metadata <- read_csv("/Users/lmoore/Desktop/Documents/CSU/PhD/16s/Grazing_Microbiome/metadata.csv")
+```
+
+# Select and clean variables for correlation analysis
+```{r}
+combined_predictors <- metadata %>%
+  dplyr::select(
+    Sample,
+    Richness_16s, Evenness_16s, Shannons_16s,
+    Evenness_ITS, Shannons_ITS, Richness_ITS,
+    Biomass, FB_Ratio_Normal,
+    vip_sum_16S_maoc_relab, vip_sum_ITS_maoc_relab,
+    vip_mean_16S_maoc_relab, vip_mean_ITS_maoc_relab,
+    maom_c, total_c, total_n, maom_n, pom_c, pom_n, c_n_ratio,
+    pH, percent_clay, percent_sand, percent_silt,
+    Adaptive_Score, mean_annual_temp, mean_annual_precip,
+    `PET (mm/day)`, radiation, Latitude, Longitude
+  ) %>%
+  drop_na() %>%                        # Remove rows with any missing data
+  mutate(across(-Sample, as.numeric)) # Ensure all variables are numeric (excluding Sample)
+
+```
+
+```{r}
+# Prepare data matrix for correlation analysis
+cor_input <- combined_predictors %>%
+  select(-Sample) %>%
+  drop_na() %>%                # Ensures no missing values
+  mutate(across(everything(), as.numeric)) %>%
+  as.matrix()
+
+# Run rcorr
+cor_results <- rcorr(cor_input, type = "spearman")
+
+# Extract correlation and p-value matrices
+cor_matrix <- cor_results$r
+p_matrix <- cor_results$P
+
+```
+
+
+```{r}
+diag(p_matrix) <- 0  # or use 1 if you want them excluded from significance coloring
+```
+
+# Plot correlation matrix with significant correlations only
+```{r correlation_plot, fig.width = 10, fig.height = 10}
+corrplot(cor_matrix,
+         method = "color",
+         type = "upper",
+         tl.col = "black",
+         tl.srt = 45,
+         p.mat = p_matrix,
+         sig.level = 0.05,
+         insig = "blank")
+
+```

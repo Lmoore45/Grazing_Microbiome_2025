@@ -9,7 +9,7 @@ source("VIP.R")  # Only needed if using custom VIP functions (not used here)
 ##### Step 2: Load Data
 # Load metadata and ITS OTU table
 metadata <- read_csv("metadata.csv")
-otu_ITS <- read_csv("ITS_table.csv")
+otu_ITS <- read_csv("1.3_ITS_OTU_Table.csv")
 
 ##### Step 3: Preprocess OTU Table
 # Convert ITS OTU table to long and then wide format

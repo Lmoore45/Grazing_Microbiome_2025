@@ -98,7 +98,7 @@ r2_results <- purrr::map_dfr(vip_high, ~{
 
 ##### Step 12: Integrate Taxonomy
 # Split taxonomy strings and join with VIP and R2 data
-taxonomy <- read_csv("taxonomy.csv")
+taxonomy <- otu_16S %>% dplyr::select(1:2)
 taxonomy_split <- taxonomy %>%
   separate(Taxon, into = c("Domain", "Phylum", "Class", "Order", "Family", "Genus", "Species"), sep = ";", fill = "right") %>%
   mutate(across(everything(), ~str_remove(., ".*__"))) %>%

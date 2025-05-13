@@ -8,7 +8,7 @@ library(Hmisc)
 
 Load metadata containing predictor variables
 ```{r}
-metadata <- read_csv("/Users/lmoore/Desktop/Documents/CSU/PhD/16s/Grazing_Microbiome/metadata.csv")
+metadata <- read_csv("metadata.csv")
 ```
 
 Select and clean variables for correlation analysis

@@ -4,7 +4,7 @@ library(tidyverse)
 library(compositions)  # For CLR transformation
 library(mixOmics)
 library(paletteer)
-source("VIP.R")  # Only needed if using custom VIP functions (not used here)
+source("6.0_sPLS_VIP.R")  # Only needed if using custom VIP functions (not used here)
 
 ##### Step 2: Load Data
 # Load metadata and ITS OTU table

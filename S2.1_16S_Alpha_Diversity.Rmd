@@ -5,16 +5,17 @@ library(tidyverse)
 library(vegan)
 library(plyr)
 library(car)
-
 ```
 
+
+Read in data
 ```{r}
 asv <- read.csv("1.2_16S_ASV_Table.csv")
 metadata <- read.csv("metadata.csv")
 
-
 ```
 
+Clean up data
 ```{r}
 # Remove the 'Taxon' column from the 'asv' data frame and create 'asv_new'
 asv_new <- asv %>% 
@@ -37,6 +38,7 @@ table <- asv_new %>%
 
 ```
 
+Apply the richness function
 ```{r}
 richness <- ddply(table, ~Sample, function(x) {
   data.frame(Richness = sum(x[-1] > 0))
@@ -44,7 +46,7 @@ richness <- ddply(table, ~Sample, function(x) {
 
 ```
 
-
+Apply the evenness function
 ```{r}
 evenness <- ddply(table, ~Sample, function(x) {
   data.frame(Evenness = diversity(x[-1], index = "simpson") / log(sum(x[-1] > 0)))
@@ -53,7 +55,7 @@ evenness <- ddply(table, ~Sample, function(x) {
 ```
 
 
-
+Apply the shannon's diversity function
 ```{r}
 shannon <- ddply(table, ~Sample, function(x) {
   data.frame(Shannon = diversity(x[-1], index = "shannon"))
@@ -61,7 +63,7 @@ shannon <- ddply(table, ~Sample, function(x) {
 
 ```
 
-
+Join data
 ```{r}
 alpha_diversity <- shannon %>% 
   inner_join(richness, by = "Sample") %>% 
@@ -73,7 +75,7 @@ alpha_diversity <- shannon %>%
 
 
 
-
+Plot the relationship between management category (practice) and Alpha diversity
 ```{r}
 #plot for practice vs all 3 depths
 plot2 <- alpha_diversity %>%
@@ -89,7 +91,7 @@ plot2
 
 
 
-
+Statistical testing for Alpha Diversity and Management Category (Practice)
 ```{r}
 # Linear regression for each diversity metric
 lm_richness2 <- lm(Richness ~ Practice, data = alpha_diversity)
@@ -115,6 +117,47 @@ kw_test
 # Wilcoxon rank sum test for pairwise differences (used when ANOVA assumptions are violated)
 pairwise.wilcox.test(alpha_diversity$Shannon, alpha_diversity$Practice,
                  p.adjust.method = "BH")
+
+
+```
+
+
+Plot the relationship between MAOC and Alpha Diversity
+```{r}
+# Plot alpha diversity vs maom_c (MAOC) for all diversity types
+plot_maoc_vs_diversity <- alpha_diversity %>%
+  pivot_longer(cols = c(Richness, Evenness, Shannon), names_to = "Diversity_Type", values_to = "Diversity") %>%
+  ggplot(aes(x = maom_c, y = Diversity, color = Diversity_Type)) +
+  geom_point(aes(shape = Practice)) +     # Scatter plot with points colored by Diversity_Type
+  geom_smooth(method = "lm", se = FALSE) + # Add a linear regression line
+  facet_wrap(~Diversity_Type, scales = "free") +  # Separate plots for each diversity metric
+  theme_bw() +
+  labs(x = "Mineral-Associated Organic Carbon (mg C/g Soil)", y = "Alpha Diversity", title = "Relationship between Alpha Diversity and MAOC")
+
+plot_maoc_vs_diversity
+
+```
+
+Statistical testing for MAOC and Alpha Diversity
+```{r}
+# Linear regression for each diversity metric
+lm_richness <- lm(Richness ~ maom_c, data = alpha_diversity)
+lm_evenness <- lm(Evenness ~ maom_c, data = alpha_diversity)
+lm_shannon <- lm(Shannon ~ maom_c, data = alpha_diversity)
+
+# View the summary of the regression to see p-values and R-squared values
+summary(lm_richness)  # For Richness
+summary(lm_evenness)  # For Evenness
+summary(lm_shannon)   # For Shannon
+
+# Shapiro Wilks tests for normality of residuals from linear models (whether residuals from lm models are normally distributed)
+shapiro.test(residuals(lm_shannon))
+shapiro.test(residuals(lm_evenness))
+shapiro.test(residuals(lm_richness))
+
+# Spearman correaltion - used when residuals from linear regression are not normally distributed
+cor.test(alpha_diversity$Shannon, alpha_diversity$maom_c, method = "spearman")
+cor.test(alpha_diversity$Evenness, alpha_diversity$maom_c, method = "spearman")
 
 
 ```

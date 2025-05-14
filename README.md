@@ -58,18 +58,6 @@ These scripts generate additional exploratory figures and supporting plots used 
 
 ---
 
-## Software Requirements  
-These analyses were developed and tested in R. Major packages used include:
-- `tidyverse`
-- `mixOmics`
-- `pls` 
-- `compositions`
-- `ggplot2`
-- `corrplot`
-- `Hmisc`
-
-
----
 
 ## License  
 This repository is released under the [MIT License](LICENSE). You are free to use, modify, and share this code with attribution.

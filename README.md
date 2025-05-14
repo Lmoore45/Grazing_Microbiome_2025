@@ -16,7 +16,7 @@ This section loads metadata and OTU tables.
 
 You will need to download the following input files from the repository or dataset archive:
 - `1.1_Metadata.csv` – Core metadata table  
-- `1.2_16S_OTU_table.csv` – Rarefied 16S OTU table  
+- `1.2_16S_OTU_table.csv.zip` – Rarefied 16S OTU table (zipped)
 - `1.3_ITS_OTU_table.txt` – Raw ITS OTU table  
 
 ---

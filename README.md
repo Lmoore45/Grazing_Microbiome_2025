@@ -5,6 +5,8 @@
 *Insert abstract text here once finalized.*  
 This repository supports the analyses and figures described in the manuscript, providing reproducible workflows for data processing, sPLS/PLS modeling, and supplementary figure generation using microbial and environmental data.
 
+Due to rancher privacy agreements, precise geographic coordinates used in the manuscript analyses are not included in this repository. The version of the code shared here either uses county-level centroids as placeholders.
+As a result, certain figures (e.g., climate figures, PLS, RDA) may differ slightly from those in the published manuscript. However, all primary findings and interpretations remain consistent.
 ---
 
 ## Repository Structure and How to Use 
@@ -40,6 +42,7 @@ To run these scripts, be sure to also download and include:
 ### 7.0 – Partial Least Squares (PLS)  
 Similar to sPLS but using all features (no sparsity constraint). Also requires:
 - `6.0_VIP.R` – Shared VIP function used in both sPLS and PLS scripts.
+- Note: This analysis originally used precise goegraphic coordinates, but the version shared here substitues county-level centroids to protect rancher privacy. As a result, minor differences may appear in spatially influenced model outputs, though overall patterns remain consisten. 
 
 ---
 

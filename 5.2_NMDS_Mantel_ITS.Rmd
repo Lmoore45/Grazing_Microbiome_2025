@@ -15,9 +15,9 @@ metadata <- read_csv("/Users/lmoore/Desktop/Documents/CSU/PhD/16s/Grazing_Microb
 ```
 I was not able to rarefy my ITS table as I would have lost too many samples, therefore, I chose to use a square root transformation to normalize my table instead. 
 ```{r}
-# Apply square root transformation to all sample columns, keeping OTU intact
+# Apply square root transformation to all sample columns, keeping ASV intact
 asv <- asv %>%
-  mutate(across(-OTU, sqrt))
+  mutate(across(-ASV, sqrt))
 
 # View the transformed data
 head(ASV_sqrt)
@@ -65,7 +65,7 @@ flip <- asv %>%
   select(-2) %>% 
  #select(1, contains("_D3_"))  %>% # if you want to filter out certain samples could be done here
   pivot_longer(2:88, names_to = "Sample", values_to = "count") %>% 
-  pivot_wider(names_from = OTU, values_from = count)  %>%
+  pivot_wider(names_from = ASV, values_from = count)  %>%
   inner_join(metadata) %>% 
   filter(Sample !="WYCO_0923_05_PR_D3_B_C03_XT" & Sample !="WYCO_0923_05_PR_D2_B_C03_XT" & Sample !="WYCO_0923_015_AD_D3_B_C05_XT") 
 ```

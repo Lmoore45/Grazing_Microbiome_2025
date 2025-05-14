@@ -5,8 +5,9 @@
 *Insert abstract text here once finalized.*  
 This repository supports the analyses and figures described in the manuscript, providing reproducible workflows for data processing, sPLS/PLS modeling, and supplementary figure generation using microbial and environmental data.
 
-Due to rancher privacy agreements, precise geographic coordinates used in the manuscript analyses are not included in this repository. The version of the code shared here either uses county-level centroids as placeholders.
-As a result, certain figures (e.g., climate figures, PLS, RDA) may differ slightly from those in the published manuscript. However, all primary findings and interpretations remain consistent.
+Due to rancher privacy agreements, precise geographic coordinates used in the manuscript analyses are not included in this repository. The version of the code shared here uses county-level centroids as placeholders.
+As a result, certain figures (e.g., climate figures, PLS, RDA) may differ slightly from those in the published manuscript. However, all primary findings and interpreations remain consistent. 
+
 ---
 
 ## Repository Structure and How to Use 

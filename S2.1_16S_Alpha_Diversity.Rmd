@@ -10,7 +10,7 @@ library(car)
 
 ```{r}
 asv <- read.csv("1.2_16S_ASV_Table.csv")
-metadata <- read.csv("/Users/lmoore/Desktop/Documents/CSU/PhD/16s/Grazing_Microbiome/metadata.csv")
+metadata <- read.csv("metadata.csv")
 
 
 ```

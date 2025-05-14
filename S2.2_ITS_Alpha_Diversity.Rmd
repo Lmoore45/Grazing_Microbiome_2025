@@ -63,7 +63,6 @@ evenness <- ddply(sqrt_table, ~Sample, function(x) {
 
 ```
 Apply Shannon's Diveristy Function
-
 ```{r}
 shannon <- ddply(sqrt_table, ~Sample, function(x) {
   data.frame(Shannon = diversity(x[-1], index = "shannon"))
@@ -71,19 +70,18 @@ shannon <- ddply(sqrt_table, ~Sample, function(x) {
 
 ```
 
-
+Join Data
 ```{r}
 alpha_diversity <- shannon %>% 
   inner_join(richness, by = "Sample") %>% 
   inner_join(evenness, by = "Sample") %>% 
   inner_join(metadata, by = "Sample")
-
 ```
 
 
 
 
-
+Plot the relationship between management category (practice) and Alpha diversity
 ```{r}
 #plot for practice vs all 3 depths
 plot2 <- alpha_diversity %>%
@@ -99,7 +97,7 @@ plot2
 
 
 
-
+Statistical testing for Alpha Diversity and Management Category (Practice)
 ```{r}
 # Linear regression for each diversity metric
 lm_richness <- lm(Richness ~ Practice, data = alpha_diversity)
@@ -122,7 +120,7 @@ kruskal.test(Shannon ~ Practice, data = alpha_diversity)
 ```
 
 
-
+Plot the relationship between MAOC and Alpha Diversity
 ```{r}
 # Plot alpha diversity vs maaom_c (MAOC) for all diversity types
 plot_maoc_vs_diversity <- alpha_diversity %>%
@@ -140,7 +138,7 @@ plot_maoc_vs_diversity
 
 
 
-
+Statistical testing for MAOC and Alpha Diversity
 ```{r}
 # Linear regression for each diversity metric
 lm_richness2 <- lm(Richness ~ maom_c, data = alpha_diversity)

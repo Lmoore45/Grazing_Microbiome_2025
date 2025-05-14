@@ -1,6 +1,7 @@
 # Microbes, Minerals, and Managment: What Controls Mineral-Associated Organic Carbon in Semi-Arid Rangelands?
 *Companion code repository for manuscript submission*
-\nThis repository supports the analyses and figures described in the manuscript, providing reproducible workflows for data processing, sPLS/PLS modeling, and supplementary figure generation using microbial and environmental data.
+
+This repository supports the analyses and figures described in the manuscript, providing reproducible workflows for data processing, sPLS/PLS modeling, and supplementary figure generation using microbial and environmental data.
 
 ## Manuscript Abstract  
 *Insert abstract text here once finalized.*  

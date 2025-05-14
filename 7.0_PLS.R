@@ -11,12 +11,12 @@ library(ggplot2)
 library(ggthemes)             
 
 # Source custom VIP scoring script
-source("/Users/lmoore/Desktop/Documents/CSU/PhD/Dissertation/Grazing Microbiome/R_Code/Manuscript_Code/VIP.R")
+source("6.0_sPLS_VIP.R")
 
 
 ##### Step 1: Load Metadata
 # Read in the metadata file containing sample-level environmental, microbial, and geographic data.
-metadata <- read_csv("/Users/lmoore/Desktop/Documents/CSU/PhD/Dissertation/Grazing Microbiome/R_Code/Manuscript_Code/metadata.csv")
+metadata <- read_csv("metadata.csv")
 
 ##### Step 2: Build Predictor Matrix
 # Subset and prepare predictor variables for the PLS model.

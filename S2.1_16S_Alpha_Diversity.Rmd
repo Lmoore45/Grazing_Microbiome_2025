@@ -1,0 +1,120 @@
+
+
+```{r}
+library(tidyverse)
+library(vegan)
+library(plyr)
+library(car)
+
+```
+
+```{r}
+asv <- read.csv("1.2_16S_ASV_Table.csv")
+metadata <- read.csv("/Users/lmoore/Desktop/Documents/CSU/PhD/16s/Grazing_Microbiome/metadata.csv")
+
+
+```
+
+```{r}
+# Remove the 'Taxon' column from the 'asv' data frame and create 'asv_new'
+asv_new <- asv %>% 
+  select(-Taxon)
+# Remove the columns from the 'metadata' dataframe
+metadata <- metadata %>% 
+  select(Sample, maom_c, Practice, depth) %>% 
+  drop_na()
+
+```
+
+
+```{r}
+table <- asv_new %>%
+  pivot_longer(cols = -ASV,  # This selects all columns except the ASV column
+               names_to = "Sample", 
+               values_to = "counts") %>% 
+  pivot_wider(names_from = ASV, values_from = counts)
+
+
+```
+
+```{r}
+richness <- ddply(table, ~Sample, function(x) {
+  data.frame(Richness = sum(x[-1] > 0))
+})
+
+```
+
+
+```{r}
+evenness <- ddply(table, ~Sample, function(x) {
+  data.frame(Evenness = diversity(x[-1], index = "simpson") / log(sum(x[-1] > 0)))
+})
+
+```
+
+
+
+```{r}
+shannon <- ddply(table, ~Sample, function(x) {
+  data.frame(Shannon = diversity(x[-1], index = "shannon"))
+})
+
+```
+
+
+```{r}
+alpha_diversity <- shannon %>% 
+  inner_join(richness, by = "Sample") %>% 
+  inner_join(evenness, by = "Sample") %>% 
+  inner_join(metadata, by = "Sample")
+
+```
+
+
+
+
+
+```{r}
+#plot for practice vs all 3 depths
+plot2 <- alpha_diversity %>%
+  pivot_longer(cols = c(Richness, Evenness, Shannon), names_to = "Diversity_Type", values_to = "Diversity") %>%
+  ggplot(aes(x = depth, y = Diversity, fill = Practice)) +
+  geom_boxplot() +
+  facet_wrap(~Diversity_Type, scales = "free") +
+  theme_bw()
+
+plot2
+
+```
+
+
+
+
+```{r}
+# Linear regression for each diversity metric
+lm_richness2 <- lm(Richness ~ Practice, data = alpha_diversity)
+lm_evenness2 <- lm(Evenness ~ Practice, data = alpha_diversity)
+lm_shannon2 <- lm(Shannon ~ Practice, data = alpha_diversity)
+
+# View the summary of the regression to see p-values and R-squared values
+summary(lm_richness2)  # For Richness
+summary(lm_evenness2)  # For Evenness
+summary(lm_shannon2)   # For Shannon
+
+# ANOVA to test if Shannon diversity differs significantly by Practice
+res_aov <- aov(Shannon ~ Practice, data = alpha_diversity)
+summary(res_aov)
+
+# Shapiro-Wilk test for normality of residuals from ANOVA (required for ANOVA validity)
+shapiro.test(res_aov$residuals)
+
+# Kruskal-Wallis test as a non-parametric alternative to ANOVA (for non-normal residuals)
+kw_test <- kruskal.test(Shannon ~ Practice, data = alpha_diversity)
+kw_test
+
+# Wilcoxon rank sum test for pairwise differences (used when ANOVA assumptions are violated)
+pairwise.wilcox.test(alpha_diversity$Shannon, alpha_diversity$Practice,
+                 p.adjust.method = "BH")
+
+
+```

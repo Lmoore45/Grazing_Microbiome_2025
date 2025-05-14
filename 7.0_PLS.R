@@ -1,5 +1,5 @@
 # DISCLOSURE: Due to rancher privacy agreements, precise geographic coordinates used in the manuscript analyses are not included in this repository. The version of the code shared here uses county-level centroids as placeholders. 
-# As a result, the results and figure from this analysis differs slightly from those in the published manuscript. However, all primary findings and interpreations remain consistent.
+# As a result, the results and figure from this analysis differ slightly from those in the published manuscript. However, all primary findings and interpreations remain consistent.
 
 
 # Load necessary libraries

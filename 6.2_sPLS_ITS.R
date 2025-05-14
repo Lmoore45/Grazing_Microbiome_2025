@@ -7,33 +7,33 @@ library(paletteer)
 source("6.0_sPLS_VIP.R")  # Only needed if using custom VIP functions (not used here)
 
 ##### Step 2: Load Data
-# Load metadata and ITS OTU table
+# Load metadata and ITS ASV table
 metadata <- read_csv("metadata.csv")
-otu_ITS <- read_csv("1.3_ITS_OTU_Table.csv")
+asv_ITS <- read_csv("1.3_ITS_ASV_Table.csv")
 
-##### Step 3: Preprocess OTU Table
-# Convert ITS OTU table to long and then wide format
-otu_long <- otu_ITS %>% dplyr::select(-Taxon) %>% pivot_longer(cols = -OTU, names_to = "Sample", values_to = "Abundance")
-otu_wide <- otu_long %>% pivot_wider(names_from = OTU, values_from = Abundance)
+##### Step 3: Preprocess ASV Table
+# Convert ITS ASV table to long and then wide format
+asv_long <- asv_ITS %>% dplyr::select(-Taxon) %>% pivot_longer(cols = -ASV, names_to = "Sample", values_to = "Abundance")
+asv_wide <- asv_long %>% pivot_wider(names_from = ASV, values_from = Abundance)
 
-# Filter metadata and OTU table for matching samples
-metadata_filtered <- metadata %>% dplyr::select(Sample, maom_c) %>% drop_na() %>% filter(Sample %in% otu_wide$Sample)
-otu_wide_filtered <- otu_wide %>% filter(Sample %in% metadata_filtered$Sample)
+# Filter metadata and ASV table for matching samples
+metadata_filtered <- metadata %>% dplyr::select(Sample, maom_c) %>% drop_na() %>% filter(Sample %in% asv_wide$Sample)
+asv_wide_filtered <- asv_wide %>% filter(Sample %in% metadata_filtered$Sample)
 
-##### Step 4: Normalize OTU Data with CLR
+##### Step 4: Normalize ASV Data with CLR
 # Prepare matrix, replace zeros, apply CLR transformation
-otu_numeric <- otu_wide_filtered %>% dplyr::select(-Sample)
-otu_matrix <- as.matrix(otu_numeric)
-otu_matrix[otu_matrix == 0] <- 0.0001
-otu_clr <- clr(otu_matrix)
+asv_numeric <- asv_wide_filtered %>% dplyr::select(-Sample)
+asv_matrix <- as.matrix(asv_numeric)
+asv_matrix[asv_matrix == 0] <- 0.0001
+asv_clr <- clr(asv_matrix)
 
 # Combine with sample names
-otu_clr_df <- cbind(Sample = otu_wide_filtered$Sample, as.data.frame(otu_clr))
+asv_clr_df <- cbind(Sample = asv_wide_filtered$Sample, as.data.frame(asv_clr))
 
 ##### Step 5: Align Samples
-# Ensure OTU and metadata rows match in order
-metadata_filtered <- metadata_filtered %>% arrange(match(Sample, otu_clr_df$Sample))
-stopifnot(all(metadata_filtered$Sample == otu_clr_df$Sample))
+# Ensure ASV and metadata rows match in order
+metadata_filtered <- metadata_filtered %>% arrange(match(Sample, asv_clr_df$Sample))
+stopifnot(all(metadata_filtered$Sample == asv_clr_df$Sample))
 
 ##### Step 6: Prepare Response Variable
 # Log-transform MAOM carbon, check for normality
@@ -44,10 +44,10 @@ print(shapiro.test(response_variable))
 ##### Step 7: Run sPLS Regression
 # Define model structure and sparsity
 # Adjust ncomp and keepX based on cross-validation results
-OTU_table <- as.matrix(otu_clr_df %>% dplyr::select(-Sample))
+ASV_table <- as.matrix(asv_clr_df %>% dplyr::select(-Sample))
 ncomp <- 3
 keepX <- rep(25, ncomp)
-spls_result <- spls(X = OTU_table, Y = response_variable, ncomp = ncomp, keepX = keepX, mode = "regression", scale = TRUE)
+spls_result <- spls(X = ASV_table, Y = response_variable, ncomp = ncomp, keepX = keepX, mode = "regression", scale = TRUE)
 print(spls_result)
 
 ##### Step 8: Cross-Validate Components
@@ -57,7 +57,7 @@ plot(perf_result)
 
 ##### Step 9: Predicted vs Observed
 # Evaluate model performance visually and quantitatively
-predicted <- predict(spls_result, newdata = OTU_table)$predict[, 1, 1]
+predicted <- predict(spls_result, newdata = ASV_table)$predict[, 1, 1]
 df_pred_obs <- data.frame(Observed = response_variable, Predicted = predicted)
 
 ggplot(df_pred_obs, aes(x = Observed, y = Predicted)) +
@@ -69,36 +69,36 @@ ggplot(df_pred_obs, aes(x = Observed, y = Predicted)) +
 print(paste("R-squared:", summary(lm(Predicted ~ Observed, data = df_pred_obs))$r.squared))
 
 ##### Step 10: Extract and Plot VIP Scores
-# Filter for OTUs with VIP > 1 for interpretation and downstream analysis
+# Filter for ASVs with VIP > 1 for interpretation and downstream analysis
 vip_scores_full <- mixOmics::vip(spls_result)[, "comp1"]
 vip_scores <- vip_scores_full[vip_scores_full > 1]
 vip_sorted <- sort(vip_scores, decreasing = TRUE)
-df_vip <- data.frame(OTU = names(vip_sorted), VIP = vip_sorted)
+df_vip <- data.frame(ASV = names(vip_sorted), VIP = vip_sorted)
 
-ggplot(df_vip[1:22,], aes(x = reorder(OTU, VIP), y = VIP)) +
+ggplot(df_vip[1:22,], aes(x = reorder(ASV, VIP), y = VIP)) +
   geom_bar(stat = "identity") +
   coord_flip() +
-  labs(title = "Top 25 VIP Scores (Component 1)", x = "OTU", y = "VIP") +
+  labs(title = "Top 25 VIP Scores (Component 1)", x = "ASV", y = "VIP") +
   theme_minimal()
 
-##### Step 11: Calculate R2 for High VIP OTUs
-# Quantify strength of association between individual OTUs and response
+##### Step 11: Calculate R2 for High VIP ASVs
+# Quantify strength of association between individual ASVs and response
 vip_high <- names(vip_scores)
 r2_results <- purrr::map_dfr(vip_high, ~{
-  otu_abund <- OTU_table[, .x]
-  r2 <- summary(lm(response_variable ~ otu_abund))$r.squared
-  tibble(OTU = .x, R2 = r2)
+  asv_abund <- ASV_table[, .x]
+  r2 <- summary(lm(response_variable ~ asv_abund))$r.squared
+  tibble(ASV = .x, R2 = r2)
 })
 
 ##### Step 12: Integrate Taxonomy
 # Clean and merge ITS taxonomy table with VIP and R2 results
-taxonomy <- otu_ITS %>%  dplyr::select(1:2)
+taxonomy <- asv_ITS %>%  dplyr::select(1:2)
 taxonomy_split <- taxonomy %>%
   separate(Taxonomy, into = c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species"), sep = ";", fill = "right") %>%
   mutate(across(everything(), ~str_remove(., ".*__"))) %>%
   mutate(across(everything(), ~replace_na(., "Unknown")))
 
-plot_data <- df_vip %>% left_join(taxonomy_split, by = "OTU") %>% left_join(r2_results, by = "OTU")
+plot_data <- df_vip %>% left_join(taxonomy_split, by = "ASV") %>% left_join(r2_results, by = "ASV")
 
 ##### Step 13: Plot VIP vs R2 with Taxonomy
 # Generate main interpretation plot with curved arrows
@@ -120,32 +120,32 @@ print(maoc_plot)
 
 ##### Step 14: Save Top VIP Relative Abundance (Sum and Mean)
 # Normalize ITS table to relative abundance
-otu_ITS_relab <- otu_ITS %>% mutate(across(-OTU, ~ . / sum(. , na.rm = TRUE)))
-top_otus <- df_vip$OTU
-filtered_otu <- otu_ITS_relab %>% filter(OTU %in% top_otus)
+asv_ITS_relab <- asv_ITS %>% mutate(across(-ASV, ~ . / sum(. , na.rm = TRUE)))
+top_asvs <- df_vip$ASV
+filtered_asv <- asv_ITS_relab %>% filter(ASV %in% top_asvs)
 
 # Reshape and align with metadata
-transposed_otu <- filtered_otu %>%
-  pivot_longer(cols = -OTU, names_to = "Sample", values_to = "Count") %>%
-  pivot_wider(names_from = OTU, values_from = Count) %>%
+transposed_asv <- filtered_asv %>%
+  pivot_longer(cols = -ASV, names_to = "Sample", values_to = "Count") %>%
+  pivot_wider(names_from = ASV, values_from = Count) %>%
   dplyr::slice(-89)  # Drop problematic sample if necessary
 
-transposed_otu_maoc <- transposed_otu %>% left_join(metadata %>% dplyr::select(Sample, maom_c), by = "Sample")
+transposed_asv_maoc <- transposed_asv %>% left_join(metadata %>% dplyr::select(Sample, maom_c), by = "Sample")
 
-# Identify slope direction per OTU
-otu_relationships <- transposed_otu_maoc %>%
-  pivot_longer(cols = -c(Sample, maom_c), names_to = "OTU", values_to = "RelAbundance") %>%
-  group_by(OTU) %>%
+# Identify slope direction per ASV
+asv_relationships <- transposed_asv_maoc %>%
+  pivot_longer(cols = -c(Sample, maom_c), names_to = "ASV", values_to = "RelAbundance") %>%
+  group_by(ASV) %>%
   summarize(Coefficient = coef(lm(maom_c ~ RelAbundance))[2], .groups = "drop") %>%
   mutate(Slope_Direction = ifelse(Coefficient >= 0, "Positive", "Negative"))
 
-plot_data <- plot_data %>% left_join(otu_relationships, by = "OTU")
-transposed_otu <- transposed_otu %>% dplyr::select(-one_of(otu_relationships$OTU[otu_relationships$Slope_Direction == "Negative"]))
+plot_data <- plot_data %>% left_join(asv_relationships, by = "ASV")
+transposed_asv <- transposed_asv %>% dplyr::select(-one_of(asv_relationships$ASV[asv_relationships$Slope_Direction == "Negative"]))
 
 # Calculate summed and mean abundances per sample
-otu_sums <- transposed_otu %>% rowwise() %>% mutate(Sum_VIP = sum(c_across(-Sample), na.rm = TRUE)) %>% ungroup()
-otu_means <- transposed_otu %>% rowwise() %>% mutate(Mean_VIP = mean(c_across(-Sample), na.rm = TRUE)) %>% ungroup()
+asv_sums <- transposed_asv %>% rowwise() %>% mutate(Sum_VIP = sum(c_across(-Sample), na.rm = TRUE)) %>% ungroup()
+asv_means <- transposed_asv %>% rowwise() %>% mutate(Mean_VIP = mean(c_across(-Sample), na.rm = TRUE)) %>% ungroup()
 
 # Optional: write to CSV
-# write_csv(otu_sums, "ITs_summed_relab_vip.csv")
-# write_csv(otu_means, "ITs_mean_relab_vip.csv")
+# write_csv(asv_sums, "ITs_summed_relab_vip.csv")
+# write_csv(asv_means, "ITs_mean_relab_vip.csv")

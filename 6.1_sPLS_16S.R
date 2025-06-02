@@ -16,7 +16,7 @@ asv_long <- asv_16S %>% dplyr::select(-Taxon) %>% pivot_longer(cols = -ASV, name
 asv_wide <- asv_long %>% pivot_wider(names_from = ASV, values_from = Abundance)
 
 # Filter metadata to match ASV samples and vice versa
-metadata_filtered <- metadata %>% dplyr::select(Sample, maom_c) %>% drop_na() %>% filter(Sample %in% ASV_wide$Sample)
+metadata_filtered <- metadata %>% dplyr::select(Sample, maom_c) %>% drop_na() %>% filter(Sample %in% asv_wide$Sample)
 asv_wide_filtered <- asv_wide %>% filter(Sample %in% metadata_filtered$Sample)
 
 ##### Step 4: Normalize ASV Data with CLR

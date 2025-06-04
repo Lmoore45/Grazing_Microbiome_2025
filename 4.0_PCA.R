@@ -106,12 +106,12 @@ pca_ggplot <- ggplot() +
   geom_vline(xintercept = 0, linetype = "dotted", size = 1.2, color = "black") +
   # Manually define colors for each site
   scale_color_manual(name = "Location (Site)", 
-                     values = c("Site 13" = "#46211C",  # Site 13
-                                "Site 15" = "#BE7245",  # Site 15
-                                "Site 16" = "#D2AD7C",  # Site 16
-                                "Site 19" = "#639CA4",  # Site 19
-                                "Site 5"  = "#226060",  # Site 5
-                                "Site 6"  = "#1C3333"   # Site 6
+                     values = c("Site 13" = "#be7245",  # Site A2
+                                "Site 15" = "#46211c",  # Site A3
+                                "Site 16" = "#d2ad7c",  # Site A1
+                                "Site 19" = "#D8DAEB",  # Site C1
+                                "Site 5"  = "#998ec3",  # Site C2
+                                "Site 6"  = "#542788"   # Site C3
                      )) +
   # Axis labels and legends
   labs(x = "PC1", y = "PC2", shape = "Practice") +

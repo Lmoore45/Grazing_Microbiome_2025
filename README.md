@@ -34,7 +34,7 @@ You will need to download the following input files from the repository or datas
 This section uses an API script to pull climate variables for each site.
 
 Due to rancher privacy agreements, precise site coordinates are not publicly provided. For reproducibility and transparency, the metadata included contains county centroid coordinates for each site, which differ from the actual coordinates used in the original analyses.
-The script `2.0_climate_API_pull.R` demonstrates the API call.
+The script `2.0_climate_API_Pull.R` demonstrates the API call.
 
 ---
 

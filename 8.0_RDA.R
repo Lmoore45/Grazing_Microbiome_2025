@@ -9,7 +9,7 @@ library(car)
 library(VennDiagram)
 
 ##### Step 2: Load Metadata
-metadata <- read_csv("/Users/lmoore/Desktop/Documents/CSU/PhD/16s/Grazing_Microbiome/metadata.csv")
+metadata <- read_csv("1.1_Metadata.csv")
 
 ##### Step 3: Define Predictor Groups
 # Microbiome predictors

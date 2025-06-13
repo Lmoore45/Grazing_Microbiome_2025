@@ -6,7 +6,7 @@ library(jsonlite)
 library(tidyverse)
 
 
-metadata <- read_csv("metadata.csv") 
+metadata <- read_csv("1.1_Metadata.csv") 
 
 # Ensure Latitude and Longitude are numeric
 metadata <- metadata %>%

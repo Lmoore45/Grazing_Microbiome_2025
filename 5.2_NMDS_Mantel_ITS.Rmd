@@ -10,72 +10,45 @@ library(ggthemes)
 Mantel and NMDS of rarefied table. 
 
 ```{r}
-asv <- read_tsv("/Users/lmoore/Desktop/Documents/CSU/PhD/ITS/ITS_table.txt")
-metadata <- read_csv("/Users/lmoore/Desktop/Documents/CSU/PhD/16s/Grazing_Microbiome/metadata.csv") 
+asv <- read_csv("1.3_ITS_ASV_Table.csv")
+metadata <- read_csv("1.1_Metadata.csv") 
 ```
 I was not able to rarefy my ITS table as I would have lost too many samples, therefore, I chose to use a square root transformation to normalize my table instead. 
 ```{r}
 # Apply square root transformation to all sample columns, keeping ASV intact
 asv <- asv %>%
-  mutate(across(-ASV, sqrt))
-
-# View the transformed data
-head(ASV_sqrt)
-
-```
-
-
-```{r}
-# Select only the columns needed for analysis 
-metadata <- metadata %>%
-  select(Sample, depth, depth_num, Depth_Practice, Location, Adaptive_Score, Practice, 
-         Location_Depth, Biomass, Depth_Practice,
-         percent_clay, percent_sand, percent_silt, pH, 
-         total_c, maom_c, pom_c, total_n, maom_n, pom_n, 
-         fmaoc, fpoc, c_n_ratio, mean_annual_temp, mean_annual_precip, 
-         radiation, PET)
-
+  mutate(across(-c(ASV, Taxonomy), sqrt))
 ```
 
 Bray-curtis cannot handle negative values, scale variables with negatives.
 Chose to use Min-Max Normalization to make all values non-negative while preserving relative differences.
 ```{r}
+# Clean and scale metadata
 metadata <- metadata %>%
-  mutate(mean_annual_temp_scaled = (mean_annual_temp - min(mean_annual_temp)) / 
-                                   (max(mean_annual_temp) - min(mean_annual_temp))) %>% 
-  select(-mean_annual_temp)
-
+  select(Sample, depth, depth_num, Depth_Practice, Location, Adaptive_Score, Practice, 
+         Location_Depth, Biomass, percent_clay, percent_sand, percent_silt, pH, 
+         total_c, maom_c, pom_c, total_n, maom_n, pom_n, c_n_ratio, mean_annual_temp, 
+         mean_annual_precip, radiation, PET_mm_year) %>%
+  mutate(mean_annual_temp_scaled = (mean_annual_temp - min(mean_annual_temp, na.rm = TRUE)) / 
+                                   (max(mean_annual_temp, na.rm = TRUE) - min(mean_annual_temp, na.rm = TRUE))) %>%
+  select(-mean_annual_temp) %>%
+  drop_na()
 ```
 
-
-If you want to include an environmental fit, this is where you create a df to do that.
-```{r}
-# Select the environmental variables you want to add to the NMDS
-envfit.data <- metadata %>%
-  select(Sample, pH, total_c, maom_c, pom_c, total_n, 
-         percent_clay, percent_sand, percent_silt, 
-         mean_annual_temp_scaled, mean_annual_precip, 
-         PET, radiation)
-
-```
 
 We need to invert the dataframe so that each row is a sample and each column is an ASV. This is also an opprotunity to filter out any samples/treatments we are not interested in.
 ```{r}
-flip <- asv %>% 
-  select(-2) %>% 
- #select(1, contains("_D3_"))  %>% # if you want to filter out certain samples could be done here
-  pivot_longer(2:88, names_to = "Sample", values_to = "count") %>% 
-  pivot_wider(names_from = ASV, values_from = count)  %>%
-  inner_join(metadata) %>% 
-  filter(Sample !="WYCO_0923_05_PR_D3_B_C03_XT" & Sample !="WYCO_0923_05_PR_D2_B_C03_XT" & Sample !="WYCO_0923_015_AD_D3_B_C05_XT") 
+flip <- asv %>%
+  select(-Taxonomy) %>%
+  pivot_longer(-ASV, names_to = "Sample", values_to = "count") %>%
+  pivot_wider(names_from = ASV, values_from = count, values_fill = 0) %>%  # Fill missing counts with 0
+  inner_join(metadata, by = "Sample") %>%  # Ensure you join by 'Sample'
+  filter(!Sample %in% c(
+    "WYCO_0923_05_PR_D3_B_C03_XT",
+    "WYCO_0923_05_PR_D2_B_C03_XT",
+    "WYCO_0923_015_AD_D3_B_C05_XT"
+  ))
 ```
-
-```{r}
-envfit.data <- envfit.data %>%
-  filter(Sample %in% flip$Sample)
-```
-
-
 
 Make sure that the dataframe and metadata have the same number of rows and that the rows are in the exact same order.
 ```{r}
@@ -87,15 +60,15 @@ meta <- flip %>%
 Here we filter the dataframe to remove the first column composed of sample names.
 ```{r}
 table <- flip %>% 
- select(2:3268) 
+ select(2:3266) 
 ```
-
 
 
 ```{r}
 # Ensure only numeric columns are in the table before calculating Bray-Curtis
 table_numeric <- table %>%
-  select(where(is.numeric))  # Select only numeric columns
+  select(where(is.numeric)) %>%  # Select only numeric columns
+  drop_na()
 ```
 
 
@@ -131,7 +104,7 @@ mantel_results <- list(
   "Adaptive Score" = run_mantel_test(meta$Adaptive_Score, data.t),
   "MAT" = run_mantel_test(meta$mean_annual_temp_scaled, data.t), 
   "MAP" = run_mantel_test(meta$mean_annual_precip, data.t), 
-  "PET" = run_mantel_test(meta$PET, data.t), 
+  "PET" = run_mantel_test(meta$PET_mm_year, data.t), 
   "Solar Radiation" = run_mantel_test(meta$radiation, data.t)
 )
 
@@ -146,7 +119,7 @@ mantel_df <- data.frame(
 
 ```{r}
 # Save Mantel test results
-#write.csv(mantel_df, file = "/Users/lmoore/Desktop/Documents/CSU/PhD/Dissertation/Grazing Microbiome/Data_Figures/Mantel/mantel_results_rarefied.csv")
+#write.csv(mantel_df, file = "/Users/lmoore/Desktop/Documents/CSU/PhD/Dissertation/Grazing Microbiome/Data_Figures/Mantel/ITS_mantel_results_rarefied.csv")
 ```
 
 Create bar chart of mantel test
@@ -199,9 +172,8 @@ Importatant parameters in the metaMDS function:
 
 
 ```{r}
+set.seed(12345)
 NMDS<-metaMDS(data.t, trymax= 200)
-#envfit.data <- read_csv("/Users/lmoore/Desktop/Documents/CSU/PhD/16s/Grazing_Microbiome/envfit_test.csv") # text file of enviornmental variables
-envfit_perm <- envfit(NMDS, envfit.data, permutations = 999) # this fits environmental vectors
 MDS1 = NMDS$points[,1]
 MDS2 = NMDS$points[,2]
 NMDS = data.frame(NMDS1 = MDS1, NMDS2 = MDS2)
@@ -209,16 +181,6 @@ NMDS = data.frame(NMDS1 = MDS1, NMDS2 = MDS2)
 
 ```
 
-```{r}
-NMDS <- metaMDS(data.t, k = 3, trymax = 200)  # Increase k to 3 dimensions
-
-```
-
-This only works with NMDS of 3 dimensions
-```{r}
-stressplot(NMDS, NMDS$diss)
-
-```
 
 ```{r}
 mrpp.1 <- mrpp(data.t, meta$Practice, permutations=999, distance="bray")
@@ -231,7 +193,7 @@ anosim.1 <- anosim(data.t, meta$Practice, permutations=999, distance="bray")
 anosim.1
 ```
 
-**Must use the NMDS with 2 dimensions for plotting
+
 
 ```{r}
 meta$Depth_Practice <- factor(meta$Depth_Practice, levels = c('D1_AMP','D2_AMP', 'D3_AMP', 'D1_Conventional', 'D2_Conventional', 'D3_Conventional' ))
@@ -249,27 +211,8 @@ NMDS_plot <- ggplot(NMDS) +
 
 
 
-Below is the code to select significant enviornmental variables and overlay the vectors onto the NMDS
-```{r}
-env.scores <- as.data.frame(scores(envfit_perm, display = "vectors")) #extracts relevant scores from envifit
-env.scores <- cbind(env.scores, env.variables = rownames(env.scores)) #and then gives them their names
-
-env.scores <- cbind(env.scores, pval = envfit_perm$vectors$pvals) # add pvalues to dataframe
-sig.env.scrs <- subset(env.scores, pval<=0.05) #subset data to show variables significant at 0.05
-```
 
 
 
 
 
-
-
-
-```{r}
-plot_env <- NMDS_plot +
-  geom_segment(data = sig.env.scrs, aes(x = 0, xend=NMDS1, y=0, yend=NMDS2), arrow = arrow(length = unit(0.25, "cm")), colour = "grey10", lwd=0.3) + #add vector arrows of significant env variables
-  ggrepel::geom_text_repel(data = sig.env.scrs, aes(x=NMDS1, y=NMDS2, label = env.variables), cex = 4, direction = "both", segment.size = 0.25)#+ #add labels for env variables
-  #labs(title="Ordination with environmental vectors")
-plot_env
-
-```

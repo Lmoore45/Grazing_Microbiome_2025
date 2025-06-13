@@ -8,7 +8,7 @@ source("6.0_sPLS_VIP.R")  # Only needed if using custom VIP functions (not used 
 
 ##### Step 2: Load Data
 # Load metadata and ITS ASV table
-metadata <- read_csv("metadata.csv")
+metadata <- read_csv("1.1_Metadata.csv")
 asv_ITS <- read_csv("1.3_ITS_ASV_Table.csv")
 
 ##### Step 3: Preprocess ASV Table

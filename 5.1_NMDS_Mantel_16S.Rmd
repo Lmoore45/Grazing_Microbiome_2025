@@ -184,8 +184,6 @@ A stress value above 0.2 is questionable and anything approaching 0.3 is conside
 
 ```{r}
 NMDS<-metaMDS(data.t, trymax= 200)
-#envfit.data <- read_csv("/Users/lmoore/Desktop/Documents/CSU/PhD/16s/Grazing_Microbiome/envfit_test.csv") # text file of enviornmental variables
-envfit_perm <- envfit(NMDS, envfit.data, permutations = 999) # this fits environmental vectors
 MDS1 = NMDS$points[,1]
 MDS2 = NMDS$points[,2]
 NMDS = data.frame(NMDS1 = MDS1, NMDS2 = MDS2)

@@ -8,7 +8,7 @@ library(Hmisc)
 
 Load metadata containing predictor variables
 ```{r}
-metadata <- read_csv("metadata.csv")
+metadata <- read_csv("1.1_Metadata.csv")
 ```
 
 Select and clean variables for correlation analysis
@@ -24,7 +24,7 @@ combined_predictors <- metadata %>%
     maom_c, total_c, total_n, maom_n, pom_c, pom_n, c_n_ratio,
     pH, percent_clay, percent_sand, percent_silt,
     Adaptive_Score, mean_annual_temp, mean_annual_precip,
-    `PET (mm/day)`, radiation, Latitude, Longitude
+    PET_mm_day, radiation, Latitude, Longitude
   ) %>%
   drop_na() %>%                        # Remove rows with any missing data
   mutate(across(-Sample, as.numeric)) # Ensure all variables are numeric (excluding Sample)

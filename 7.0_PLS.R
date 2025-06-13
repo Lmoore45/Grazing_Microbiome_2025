@@ -16,7 +16,7 @@ source("6.0_sPLS_VIP.R")
 
 ##### Step 1: Load Metadata
 # Read in the metadata file containing sample-level environmental, microbial, and geographic data.
-metadata <- read_csv("metadata.csv")
+metadata <- read_csv("1.1_Metadata.csv")
 
 ##### Step 2: Build Predictor Matrix
 # Subset and prepare predictor variables for the PLS model.

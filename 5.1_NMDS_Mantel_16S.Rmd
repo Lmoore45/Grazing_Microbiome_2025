@@ -38,17 +38,6 @@ metadata <- metadata %>%
 ```
 
 
-If you want to include an environmental fit, this is where you create a dataframe to do that.
-```{r}
-# Select the environmental variables you want to add to the NMDS
-envfit.data <- metadata %>%
-  select(Sample, pH, total_c, maom_c, pom_c, total_n, 
-         percent_clay, percent_sand, percent_silt, 
-         mean_annual_temp_scaled, mean_annual_precip, 
-         PET_mm_year, radiation)
-
-```
-
 We need to invert the dataframe so that each row is a sample and each column is an ASV. This is also an opprotunity to filter out any samples/treatments we are not interested in.
 ```{r}
 flip <- asv %>% 
@@ -59,13 +48,6 @@ flip <- asv %>%
   inner_join(metadata) %>%
   filter(Sample !="WYCO_0923_05_PR_D3_B_C03_XT" & Sample !="WYCO_0923_05_PR_D2_B_C03_XT" & Sample !="WYCO_0923_015_AD_D3_B_C05_XT") 
 ```
-
-```{r}
-envfit.data <- envfit.data %>%
-  filter(Sample %in% flip$Sample)
-```
-
-
 
 Make sure that the dataframe and metadata have the same number of rows and that the rows are in the exact same order.
 ```{r}

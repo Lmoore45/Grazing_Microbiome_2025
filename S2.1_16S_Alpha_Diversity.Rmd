@@ -11,7 +11,7 @@ library(car)
 Read in data
 ```{r}
 asv <- read.csv("1.2_16S_ASV_Table.csv")
-metadata <- read.csv("metadata.csv")
+metadata <- read.csv("1.1_Metadata.csv")
 
 ```
 
@@ -130,7 +130,7 @@ plot_maoc_vs_diversity <- alpha_diversity %>%
   geom_point(aes(color = Practice, shape = Practice)) +    # Color and shape by Practice
   geom_smooth(method = "lm", se = FALSE, color = "gray30") +  # Black regression line
   facet_wrap(~Diversity_Type, scales = "free") +
-  scale_color_manual(values = c("Adaptive" = "#be7245", "Prescriptive" = "#998ec3")) +
+  scale_color_manual(values = c("Adaptive" = "#be7245", "Conventional" = "#998ec3")) +
   theme_bw() +
   labs(
     x = "Mineral-Associated Organic Carbon (mg C/g Soil)",

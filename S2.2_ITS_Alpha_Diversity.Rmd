@@ -35,21 +35,9 @@ table <- asv %>%
 
 ```
 
-Square Root Transform the ASV Table
-```{r}
-# Apply square root transformation to all ASV columns, keeping Sample column unchanged
-sqrt_table <- table %>%
-  mutate(across(-Sample, sqrt))
-
-
-# Apply relative abundance normalization only to ASV columns, keeping Sample column unchanged
-relab_table <- sqrt_table %>%
-  mutate(across(-Sample, ~ . / sum(.), .names = NULL))
-```
-
 Apply richness function
 ```{r}
-richness <- ddply(sqrt_table, ~Sample, function(x) {
+richness <- ddply(table, ~Sample, function(x) {
   data.frame(Richness = sum(x[-1] > 0))
 })
 
@@ -57,14 +45,14 @@ richness <- ddply(sqrt_table, ~Sample, function(x) {
 
 Apply evenness function
 ```{r}
-evenness <- ddply(sqrt_table, ~Sample, function(x) {
+evenness <- ddply(table, ~Sample, function(x) {
   data.frame(Evenness = diversity(x[-1], index = "simpson") / log(sum(x[-1] > 0)))
 })
 
 ```
 Apply Shannon's Diveristy Function
 ```{r}
-shannon <- ddply(sqrt_table, ~Sample, function(x) {
+shannon <- ddply(table, ~Sample, function(x) {
   data.frame(Shannon = diversity(x[-1], index = "shannon"))
 })
 

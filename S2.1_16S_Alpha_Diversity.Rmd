@@ -77,15 +77,16 @@ alpha_diversity <- shannon %>%
 
 Plot the relationship between management category (practice) and Alpha diversity
 ```{r}
-#plot for practice vs all 3 depths
-plot2 <- alpha_diversity %>%
+plot_management <- alpha_diversity %>%
   pivot_longer(cols = c(Richness, Evenness, Shannon), names_to = "Diversity_Type", values_to = "Diversity") %>%
   ggplot(aes(x = depth, y = Diversity, fill = Practice)) +
   geom_boxplot() +
   facet_wrap(~Diversity_Type, scales = "free") +
+  scale_fill_manual(values = c("Adaptive" = "#be7245", "Conventional" = "#998ec3")) +
   theme_bw()
 
-plot2
+
+plot_management
 
 ```
 

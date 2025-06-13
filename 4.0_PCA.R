@@ -16,7 +16,7 @@ library(grid)        # For graphical functions
 
 
 # Load metadata
-data <- read.csv("metadata.csv")
+data <- read.csv("1.1_Metadata.csv")
 
 # Filter out the outlier and select relevant variables
 metadata <- data %>%

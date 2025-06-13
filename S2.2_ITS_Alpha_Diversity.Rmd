@@ -10,7 +10,7 @@ library(car)
 Load Data
 ```{r}
 asv <- read_csv("1.3_ITS_ASV_Table.csv")
-metadata <- read.csv("metadata.csv")
+metadata <- read.csv("1.1_Metadata.csv")
 ```
 Clean Data
 ```{r}
@@ -83,15 +83,16 @@ alpha_diversity <- shannon %>%
 
 Plot the relationship between management category (practice) and Alpha diversity
 ```{r}
-#plot for practice vs all 3 depths
-plot2 <- alpha_diversity %>%
+plot_management <- alpha_diversity %>%
   pivot_longer(cols = c(Richness, Evenness, Shannon), names_to = "Diversity_Type", values_to = "Diversity") %>%
   ggplot(aes(x = depth, y = Diversity, fill = Practice)) +
   geom_boxplot() +
   facet_wrap(~Diversity_Type, scales = "free") +
+  scale_fill_manual(values = c("Adaptive" = "#be7245", "Conventional" = "#998ec3")) +
   theme_bw()
 
-plot2
+
+plot_management
 
 ```
 
@@ -122,17 +123,22 @@ kruskal.test(Shannon ~ Practice, data = alpha_diversity)
 
 Plot the relationship between MAOC and Alpha Diversity
 ```{r}
-# Plot alpha diversity vs maaom_c (MAOC) for all diversity types
 plot_maoc_vs_diversity <- alpha_diversity %>%
   pivot_longer(cols = c(Richness, Evenness, Shannon), names_to = "Diversity_Type", values_to = "Diversity") %>%
-  ggplot(aes(x = maom_c, y = Diversity, color = Diversity_Type)) +
-  geom_point(aes(shape = Practice)) +     # Scatter plot with points colored by Diversity_Type
-  geom_smooth(method = "lm", se = FALSE) + # Add a linear regression line
-  facet_wrap(~Diversity_Type, scales = "free") +  # Separate plots for each diversity metric
+  ggplot(aes(x = maom_c, y = Diversity)) +
+  geom_point(aes(color = Practice, shape = Practice)) +    # Color and shape by Practice
+  geom_smooth(method = "lm", se = FALSE, color = "gray30") +  # Black regression line
+  facet_wrap(~Diversity_Type, scales = "free") +
+  scale_color_manual(values = c("Adaptive" = "#be7245", "Conventional" = "#998ec3")) +
   theme_bw() +
-  labs(x = "Mineral-Associated Organic Carbon (mg C/ g soil)", y = "Alpha Diversity", title = "Relationship between Alpha Diversity and MAOC")
+  labs(
+    x = "Mineral-Associated Organic Carbon (mg C/g Soil)",
+    y = "Alpha Diversity",
+    title = "Relationship between Alpha Diversity and MAOC"
+  )
 
 plot_maoc_vs_diversity
+
 
 ```
 

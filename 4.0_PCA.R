@@ -23,7 +23,7 @@ metadata <- data %>%
   filter(Sample != "WYCO_0923_05_PR_D3_B_C03_XT") %>%
   select(Sample, pH, total_c, maom_c, pom_c, total_n, maom_n, pom_n,
          percent_clay, percent_sand, percent_silt,
-         mean_annual_temp, mean_annual_precip, PET, radiation, Location)
+         mean_annual_temp, mean_annual_precip, PET_mm_year, radiation, Location)
 
 # Remove missing values
 metadata[metadata == "#N/A"] <- NA

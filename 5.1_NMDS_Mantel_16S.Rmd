@@ -10,22 +10,20 @@ library(ggthemes)
 Mantel and NMDS of rarefied table. 
 
 ```{r}
-asv <- read_csv("rarefy.table.csv")
-metadata <- read_csv("metadata.csv") 
+asv <- read_csv("1.2_16S_ASV_Table.csv")
+metadata <- read_csv("1.1_Metadata.csv") 
 
 ```
-
-
 
 ```{r}
 # Select only the columns needed for analysis 
 metadata <- metadata %>%
-  select(Sample, depth, depth_num, Depth_Practice, Location, Adaptive_Score, Practice, 
-         Location_Depth, Biomass, Depth_Practice,
+  select(Sample, depth, depth_num, Depth_Practice, Location, Adaptive_Score, Practice, Location_Depth, Biomass,
          percent_clay, percent_sand, percent_silt, pH, 
          total_c, maom_c, pom_c, total_n, maom_n, pom_n, 
-         fmaoc, fpoc, c_n_ratio, mean_annual_temp, mean_annual_precip, 
-         radiation, PET)
+         c_n_ratio, mean_annual_temp, mean_annual_precip, 
+         radiation, PET_mm_year) %>% 
+  drop_na()
 
 ```
 
@@ -47,7 +45,7 @@ envfit.data <- metadata %>%
   select(Sample, pH, total_c, maom_c, pom_c, total_n, 
          percent_clay, percent_sand, percent_silt, 
          mean_annual_temp_scaled, mean_annual_precip, 
-         PET, radiation)
+         PET_mm_year, radiation)
 
 ```
 
@@ -79,7 +77,7 @@ meta <- flip %>%
 Here we filter the dataframe to remove the first column composed of sample names.
 ```{r}
 table <- flip %>% 
- select(2:21383) 
+ select(2:21381) 
 ```
 
 
@@ -87,7 +85,8 @@ table <- flip %>%
 ```{r}
 # Ensure only numeric columns are in the table before calculating Bray-Curtis
 table_numeric <- table %>%
-  select(where(is.numeric))  # Select only numeric columns
+  select(where(is.numeric)) %>%  # Select only numeric columns
+  drop_na()
 ```
 
 
@@ -123,7 +122,7 @@ mantel_results <- list(
   "Adaptive Score" = run_mantel_test(meta$Adaptive_Score, data.t),
   "MAT" = run_mantel_test(meta$mean_annual_temp_scaled, data.t), 
   "MAP" = run_mantel_test(meta$mean_annual_precip, data.t), 
-  "PET" = run_mantel_test(meta$PET, data.t), 
+  "PET" = run_mantel_test(meta$PET_mm_year, data.t), 
   "Solar Radiation" = run_mantel_test(meta$radiation, data.t)
 )
 
@@ -182,12 +181,6 @@ Stress value below 0.1 is considered a good fit
 Stress value below 0.2 is considered an ok fit 
 A stress value above 0.2 is questionable and anything approaching 0.3 is considered arbitrary
 
-Importatant parameters in the metaMDS function:
-"trymax"" is the maximum number of random starts it will perform to try to reach convergence. The defaul value is 20 and if it reaches convergence after 20 random starts it will end there. Otherwise it will go either until it reaches convergence or the number of tries youhave put in.
-
-"k" is the number of dimensions. If you are having trouble converging then you can try increasing the k value. If you don't set k it will run with 2 dimensions. Increasing hte k value will likely increase the stress. Anything above 5 dimensions makes interpreting 2-dimensional plots difficult.
-
-
 
 ```{r}
 NMDS<-metaMDS(data.t, trymax= 200)
@@ -200,16 +193,7 @@ NMDS = data.frame(NMDS1 = MDS1, NMDS2 = MDS2)
 
 ```
 
-```{r}
-NMDS <- metaMDS(data.t, k = 3, trymax = 200)  # Increase k to 3 dimensions
 
-```
-
-
-```{r}
-stressplot(NMDS, NMDS$diss)
-
-```
 
 ```{r}
 mrpp.1 <- mrpp(data.t, meta$Practice, permutations=999, distance="bray")
@@ -222,7 +206,7 @@ anosim.1 <- anosim(data.t, meta$Practice, permutations=999, distance="bray")
 anosim.1
 ```
 
-**Must use the NMDS with 2 dimensions for plotting
+
 ```{r}
 meta$Depth_Practice <- factor(meta$Depth_Practice, levels = c('D1_AMP','D2_AMP', 'D3_AMP', 'D1_Conventional', 'D2_Conventional', 'D3_Conventional' ))
 NMDS_plot <- ggplot(NMDS) +
@@ -239,21 +223,3 @@ NMDS_plot <- ggplot(NMDS) +
 
 
 
-Below is the code to select significant enviornmental variables and overlay the vectors onto the NMDS
-```{r}
-env.scores <- as.data.frame(scores(envfit_perm, display = "vectors")) #extracts relevant scores from envifit
-env.scores <- cbind(env.scores, env.variables = rownames(env.scores)) #and then gives them their names
-
-env.scores <- cbind(env.scores, pval = envfit_perm$vectors$pvals) # add pvalues to dataframe
-sig.env.scrs <- subset(env.scores, pval<=0.05) #subset data to show variables significant at 0.05
-```
-
-Plot the NMDS with the environmental fit
-```{r}
-plot_env <- NMDS_plot +
-  geom_segment(data = sig.env.scrs, aes(x = 0, xend=NMDS1, y=0, yend=NMDS2), arrow = arrow(length = unit(0.25, "cm")), colour = "grey10", lwd=0.3) + #add vector arrows of significant env variables
-  ggrepel::geom_text_repel(data = sig.env.scrs, aes(x=NMDS1, y=NMDS2, label = env.variables), cex = 4, direction = "both", segment.size = 0.25)#+ #add labels for env variables
-  #labs(title="Ordination with environmental vectors")
-plot_env
-
-```

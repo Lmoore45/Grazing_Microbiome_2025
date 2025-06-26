@@ -4,7 +4,7 @@ library(tidyverse)
 library(compositions)  
 library(mixOmics)
 library(paletteer)
-source("6.0_sPLS_VIP.R") 
+source("6.0_sPLS_VIP.R") # Custom script to compute VIPs
 
 ##### Step 2: Load Data
 # Load metadata and ITS ASV table

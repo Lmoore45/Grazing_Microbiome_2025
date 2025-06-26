@@ -1,7 +1,7 @@
 ##### Step 1: Load Libraries and Source VIP Function
 library(ggplot2)
 library(tidyverse)
-library(compositions)  # For CLR transformation
+library(compositions)  
 library(mixOmics)
 library(paletteer)
 source("6.0_sPLS_VIP.R") 
